@@ -1,24 +1,35 @@
 {
-  "name": "directory-doctor",
-  "version": "0.2.0",
-  "author": "Tyler Johnson <tyler@vintyge.com>",
-  "description": "Self-contained directory management library.",
-  "homepage": "https://github.com/appleifreak/node-doctor",
-  "main": "main.js",
-  "dependencies": {
-    "underscore": "1.4.4",
-    "fs-extra": "~0.5.0",
-    "watch": "~0.5.1",
-    "errno": "0.0.3",
-    "async": "~0.2.6",
-    "mv": "0.0.5"
-  },
-  "engines": {
-    "node": ">=0.8"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/appleifreak/node-doctor.git"
-  },
-  "keywords": []
+	"name": "directory-doctor",
+	"version": "0.2.0",
+	"author": "Tyler Johnson <tyler@vintyge.com>",
+	"description": "Self-contained directory management library.",
+	"homepage": "https://github.com/appleifreak/node-doctor",
+	"main": "main.js",
+	"dependencies": {
+		"underscore": "1.4.4",
+		"fs-extra": "~0.5.0",
+		"watch": "~0.5.1",
+		"errno": "0.0.3",
+		"async": "~0.2.6",
+		"mv": "0.0.5"
+	},
+	"engines": {
+		"node": ">=0.8"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/appleifreak/node-doctor.git"
+	},
+	"keywords": [
+		"directory",
+		"traversal",
+		"file",
+		"watch",
+		"filesystem",
+		"find",
+		"move",
+		"copy",
+		"write",
+		"read"
+	]
 }
