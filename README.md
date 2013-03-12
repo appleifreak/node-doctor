@@ -5,6 +5,7 @@ Doctor is a self-contained directory management library for Node.js. This libary
 ## Install
 
 `npm install directory-doctor --save`
+
 The `--save` will tell npm to add it to your `package.json`.
 
 ## Usage
