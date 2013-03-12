@@ -294,14 +294,22 @@ class Doctor extends SRPClass
 			if err then cb(err)
 			else
 				@write_cache = {}
-				@refresh cb # refresh tree
+				@refresh (err) => # refresh tree
+					if err then cb err
+					else
+						@emit "save"
+						cb() 
 		)
 	
 	load: (from, to, cb) ->
 		if _.isFunction(to) and !cb then [cb, to] = [to, path.basename(from)]
 		fs.copy from, path.resolve(@location, to), (err) ->
 			if err then cb(err)
-			else @refresh cb # refresh tree
+			else @refresh (err) => # refresh tree
+				if err then cb err
+				else
+					@emit "load", from, to
+					cb() 
 
 	copy: Doctor.prototype.load
 
