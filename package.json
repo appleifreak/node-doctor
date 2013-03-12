@@ -1,5 +1,5 @@
 {
-	"name": "doctor",
+	"name": "directory-doctor",
 	"version": "0.1.0",
 	"author": "Tyler Johnson <tyler@vintyge.com>",
 	"description": "Self-contained directory management library.",

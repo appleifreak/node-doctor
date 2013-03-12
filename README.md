@@ -2,12 +2,17 @@
 
 Doctor is a self-contained directory management library for Node.js. This libary is based on the Simple Resource Protocol philosophy: one object to manage a single resource (or directory in this case). While it attempts to be "simple" (and is to some degree), this library can cause filesystem management to get complex, very fast. Proper usage can and will prevent this.
 
+## Install
+
+`npm install directory-doctor --save`
+The `--save` will tell npm to add it to your `package.json`.
+
 ## Usage
 
 To use `Doctor`, create a new object from the base class. The first argument is the path to the folder you want to use. If the folder doesn't exist, it is created. The second argument should be an options object. `Doctor` extends event emitter and before it can be used, you will need to wait for the "ready" event.
 
 ```js
-var Doctor = require('doctor'),
+var Doctor = require('directory-doctor'),
 	d = new Doctor('my-folder');
 
 d.on("ready", function() {
