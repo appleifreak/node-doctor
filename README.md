@@ -2,6 +2,8 @@
 
 Doctor is a self-contained directory management library for Node.js. This libary is based on the Simple Resource Protocol philosophy: one object to manage a single resource (or directory in this case). While it attempts to be "simple" (and is to some degree), this library can cause filesystem management to get complex, very fast. Proper usage can and will prevent this.
 
+Doctor uses heavy caching to maintain filesystem appearances. That being said, this library is reccomended for situations that need high usability (ie you need *most* fs commands) on a single directory with a small amount of sub-items (< 5000?).
+
 ## Install
 
 `npm install directory-doctor --save`
@@ -81,7 +83,16 @@ d.save(function(err) {
 });
 ```
 
-Doctor has a handleful other useful methods as well.
+Sometimes the internal tree gets a little out of balance. Call `Doctor.refresh()` to re-walk the directory tree and refresh the cache. This generally shouldn't happen unless using `Doctor.set()` *without* a callback and `Doctor.save()` *hasn't* been called yet. Doctor watches the tree for changes, so even outside changes will be caught.
+
+```js
+d.refresh(function(err) {
+	if (err) console.log(err.stack);
+	else console.log("Refreshed!");
+});
+```
+
+Doctor has a handleful of other useful methods as well.
 
 ```js
 // Watch all the files in the "other" folder, deeply.
@@ -95,7 +106,7 @@ d.load("src", function(err) {
 	else console.log("Done!");
 });
 
-// Move the file "a.txt" in the `Doctor` directory to "../a-old.txt". CWD for the second argument is the `Doctor` directory.
+// Move the file "a.txt" in the `Doctor` directory to "../a-old.txt". The base directory for the second argument is the `Doctor` directory.
 d.move("a.txt", "../a-old.txt", function(err) {
 	if (err) console.log(err.stack);
 	else console.log("Done!");
