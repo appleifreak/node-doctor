@@ -89,13 +89,13 @@ d.watch("other/**", function(file, stat) {
 	console.log(file + " changed...");
 });
 
-// Copy the folder "src" to the directory.
+// Copy the folder "src" in the CWD (ie where ever the script is being run) to the `Doctor` directory.
 d.load("src", function(err) {
 	if (err) console.log(err.stack);
 	else console.log("Done!");
 });
 
-// Move the file "a.txt" to "../a-old.txt". CWD for this method is the `Doctor` object's location.
+// Move the file "a.txt" in the `Doctor` directory to "../a-old.txt". CWD for the second argument is the `Doctor` directory.
 d.move("a.txt", "../a-old.txt", function(err) {
 	if (err) console.log(err.stack);
 	else console.log("Done!");
