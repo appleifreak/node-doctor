@@ -32,15 +32,7 @@ class Doctor extends SRPClass
 
 		# Watch the filesystem
 		watch_cb = (f, curr, prev) =>
-			if typeof f is "object" and prev is null and curr is null
-				@tree = _.chain(f).pairs().map((p) =>
-					k = p[0].replace @location, ""
-					p[0] = if k.substr(0, 1) isnt "/" then "/" + k else k
-					### TODO: Include more than just files and directories ###
-					fod = p[1].isFile() or p[1].isDirectory()
-					return if fod then p else null
-				).object().value()
-				@emit "ready"
+			if typeof f is "object" and prev is null and curr is null then @emit "ready"
 			else
 				k = f.replace @location, ""
 				@tree[k] = curr
@@ -49,7 +41,10 @@ class Doctor extends SRPClass
 		# Create the folder if it doesn't exist
 		fs.mkdirs @location, (err) =>
 			if err then @emit "error", err
-			else watch.watchTree @location, watch_cb
+			
+			# Refresh the tree and then watch it
+			else @refresh () =>
+				watch.watchTree @location, watch_cb
 
 	get: (file, cb) ->
 		file = @_path file
@@ -59,8 +54,10 @@ class Doctor extends SRPClass
 		unless stat
 			if _.isFunction(cb) then cb customFSError "ENOENT"
 			return undefined
-		#else if stat.isDirectory()
-			# Return a new doctor object...
+		else if stat.isDirectory()
+			files = @match file + @options.key_sep + "*"
+			if _.isFunction(cb) then cb null, files
+			return files
 		else if stat.isFile()
 			fstream = fs.createReadStream fp
 			unless _.isFunction(cb) then return fstream
@@ -81,8 +78,7 @@ class Doctor extends SRPClass
 		fp = @_full_path file
 		
 		unless stat then return undefined
-		#else if stat.isDirectory()
-			# Return a new doctor object...
+		else if stat.isDirectory() then return @match file + @options.key_sep + "*"
 		else if stat.isFile() then return fs.readFileSync fp
 
 	set: (file, value, cb) ->
@@ -113,43 +109,32 @@ class Doctor extends SRPClass
 					fstream = fs.createWriteStream fp
 					
 					fstream.on "close", () =>
-						# Update stats when it's done
-						fs.stat fp, (err, stats) =>
-							if err then cb err
-							else
-								@tree[file] = stats
-								cb null
+						# Refresh tree when done
+						@refresh cb
 
 					fstream.on "error", (err) -> cb err
 					fstream.end(value)
 
 		# Is object or array? must want a folder
 		else if _.isObject(value)
+			ccb = (err) =>
+				if err then cb err
+				else @refresh cb
+
 			# Make the folder if it doesn't exist
 			fs.mkdirs fp, (err) =>
-				if err then return cb err
+				if err then return ccb err
 				
 				# No contents, return
-				unless _.size(value) then cb null
+				unless _.size(value) then return ccb null
+				files = if _.isArray(value) then value else _.keys(value)
 				
-				# Is array? load up stream and return that
-				else if _.isArray(value)
-					streams = {}
-					_.each value, (key) =>
-						nkey = path.join file, key
-						streams[key] = @set nkey, ""
-					cb null, streams
-				
-				# Is Object? Write data and get out
-				else
-					files = _.keys value
-					async.each(files, (key, callback) =>
-						data = value[key]
-						key = path.join file, key
-						@set key, data, callback
-					, (err) =>
-						cb err
-					)
+				# Is array? create files
+				async.each(files, (key, callback) =>
+					data = if _.isArray(value) then "" else value[key]
+					key = path.join file, key
+					@set key, data, callback
+				, ccb)
 		else
 			err = new Error "Expecting string, buffer, array or object."
 			if _.isFunction(cb) then cb err
@@ -177,6 +162,9 @@ class Doctor extends SRPClass
 			# Make the folder if it doesn't exist
 			fs.mkdirsSync fp
 
+			# Update stats for the new folder
+			@tree[file] = fs.statSync fp
+
 			# No contents, return
 			unless _.size(value) then return
 				
@@ -196,11 +184,12 @@ class Doctor extends SRPClass
 		fs.remove @_full_path(file), (err) =>
 			if _.isFunction(cb)
 				if err then cb err
-				else cb null
+				else @refresh cb
 			else if err then @emit "error", err
 
 	removeSync: (file) ->
 		fs.removeSync @_full_path(file)
+		if _.has(@tree, file) then delete @tree[file]
 
 	test: (file) ->
 		return if @_stat(file) then true else false
@@ -305,18 +294,46 @@ class Doctor extends SRPClass
 			if err then cb(err)
 			else
 				@write_cache = {}
-				cb()
+				@refresh cb # refresh tree
 		)
 	
 	load: (from, to, cb) ->
 		if _.isFunction(to) and !cb then [cb, to] = [to, path.basename(from)]
-		fs.copy from, @_full_path(to), cb
+		fs.copy from, path.resolve(@location, to), (err) ->
+			if err then cb(err)
+			else @refresh cb # refresh tree
 
 	copy: Doctor.prototype.load
 
 	move: (file, to, cb) ->
 		to = path.resolve @location, to
-		mv @_full_path(file), to, cb
+		mv @_full_path(file), to, (err) ->
+			if err then cb(err)
+			else @refresh cb # refresh tree
+
+	refresh: (cb) ->
+		@tree = {} # Reset tree
+
+		exec "find .", {
+			timeout: 30 * 1000, # 30 seconds
+			cwd: @location
+		}, (err, stdout, stdin) =>
+			files = _.chain(stdout.split('\n')).compact().map((p) ->
+				p = if p.substr(0, 1) is "." then p.substr(1) else p
+				p = if p.substr(0, 1) isnt "/" then "/" + p else p
+				return p
+			).value()
+
+			async.each(files, (file, callback) =>
+				fs.stat @_full_path(file), (err, stat) =>
+					if err then callback err
+					else
+						@tree[file] = stat
+						callback()
+			, (err) =>
+				if _.isFunction(cb) then cb(err)
+				else if err then @emit "error", err
+			)
 
 	_path: (file) ->
 		unless file then file = ""
