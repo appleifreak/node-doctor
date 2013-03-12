@@ -27,7 +27,7 @@ d.on("error", function() {
 
 ## Examples
 
-`Doctor` maintains an internal cache of write streams to allow for semi-synchronous writes. In the example below, `Doctor` will create two writestreams for the two new files. If the folder `other` doesn't exist, it's created. To "flush" the cache and send `EOF` to all the streams, the async function `save` is called.
+`Doctor` maintains an internal cache of write streams to allow for semi-synchronous writes. In the example below, `Doctor` will create two writestreams for the two new files. If the folder `other` doesn't exist, this will error (pass a callback to prevent this). To "flush" the cache and send `EOF` to all the streams, the async function `save` is called.
 
 ```js
 d.set("other/one.txt", "Hullo!");
